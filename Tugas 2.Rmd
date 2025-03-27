@@ -1,0 +1,104 @@
+---
+title: "Tugas 2 - Majors"
+author: "Deshi Nur Biya"
+date: "2025-03-26"
+output: html_document
+---
+
+```{r}
+install.packages(c("tidyverse", "dsbox", "scales", "fivethirtyeight", "glue"))
+
+```
+
+```{r}
+#Data yang digunakan
+glimpse(college_recent_grads)
+?college_recent_grads
+
+```
+
+### Exercise 1
+Ada tiga jenis pendapatan yang dilaporkan dalam data frame ini: p25th, median, dan p75th. Ketiganya masing-masing merujuk pada persentil ke-25, ke-50, dan ke-75 dari distribusi pendapatan individu yang diambil sampelnya untuk suatu jurusan tertentu. Mengapa kita sering memilih median daripada mean untuk menggambarkan pendapatan tipikal suatu kelompok?
+
+```{r}
+summary(college_recent_grads[, c("p25th", "median", "p75th")])
+```
+Jawaban:
+Kita sering memilih median daripada mean karena untuk menggambarkan pendapatan tipikal suatu kelompok median lebih tahan terhadap outlier karena hanya bergantung pada nilai tengah data dan distribusi yang tidak simetris.Pendapatan biasanya memiliki distribusi miring ke kanan, yang di mana sebagian kecil individu berpenghasilan sangat tinggi dapat menarik mean ke atas, sehingga tidak mencerminkan mayoritas pekerja. Sebaliknya, median menunjukkan titik tengah distribusi, di mana setengah individu berpenghasilan lebih rendah dan setengahnya lebih tinggi, sehingga lebih representatif dan mudah diinterpretasikan. Sebagai contoh, nilai mean pendapatan median adalah 40.151 sedangkan median pendapatan median adalah 30.600. Jika ada beberapa individu dengan pendapatan sangat tinggi (misalnya, mendekati nilai maksimum 110.000), mean akan terdorong ke atas, tetapi median tetap stabil karena hanya bergantung pada nilai tengah data. Hal ini menunjukkan bahwa median lebih mencerminkan pendapatan "tipikal" dibandingkan mean yang bisa dipengaruhi oleh segelintir individu dengan gaji tinggi (menyebabkan outlier).
+
+
+### Exercise 2
+Buat ulang visualisasi berikut. Catatan: Lebar bin yang digunakan adalah $5.000. Perhatikan dengan cermat teks dan label pada sumbu.
+
+```{r}
+data("college_recent_grads")
+stem_majors <- college_recent_grads %>%
+  filter(major_category %in% c("Biology & Life Science", "Computers & Mathematics", 
+                               "Engineering", "Physical Sciences"),
+         employed_fulltime_yearround > 0) %>%  
+  filter(!is.na(median), median >= 20000, median <= 100000)  
+ggplot(stem_majors, aes(x = median, fill = major_category)) +
+  geom_histogram(binwidth = 5000, color = "white", alpha = 0.7) +
+  facet_wrap(~ major_category, scales = "free_y", ncol = 1) +  # Mengatur agar berbaris ke bawah
+  scale_x_continuous(labels = scales::label_dollar()) +
+  labs(title = "Median earnings of full-time, year-round workers",
+       subtitle = "For STEM majors",
+       x = "Median earnings",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+### Exercise 3
+
+Buat ulang visualisasi dari latihan sebelumnya, kali ini dengan lebar bin sebesar $1.000. Mana yang lebih baik antara $1.000 atau $5.000 sebagai pilihan lebar bin? Jelaskan alasan Anda dalam satu kalimat.
+
+```{r}
+data("college_recent_grads")
+stem_majors <- college_recent_grads %>%
+  filter(major_category %in% c("Biology & Life Science", "Computers & Mathematics", 
+                               "Engineering", "Physical Sciences"),
+         employed_fulltime_yearround > 0) %>%  
+  filter(!is.na(median), median >= 20000, median <= 100000)  
+ggplot(stem_majors, aes(x = median, fill = major_category)) +
+  geom_histogram(binwidth = 1000, color = "white", alpha = 0.9) +
+  facet_wrap(~ major_category, scales = "free_y", ncol = 1) +  
+  scale_x_continuous(labels = scales::label_dollar()) +
+  labs(title = "Median earnings of full-time, year-round workers",
+       subtitle = "For STEM majors",
+       x = "Median earnings",
+       y = "Frequency") +
+  theme_minimal()
+```
+Jawaban :
+Lebar bin $1.000 menampilkan detail lebih rinci dalam distribusi pendapatan, tetapi bisa membuat grafik terlihat lumayan kecil sehingga menyebabkan pola cukup sulit untuk dianalisis, sedangkan lebar bin $5.000 lebih menyederhanakan pola sehingga lebih mudah dibaca. Dalam analisis pendapatan, lebar bin $5.000 lebih baik karena memberikan gambaran yang lebih jelas tentang tren umum tanpa terlalu banyak variasi kecil yang bisa membingungkan.
+
+### Exercise 4
+
+Jurusan STEM mana (yaitu, jurusan dalam kategori "Biology & Life Science", "Computers & Mathematics", "Engineering", dan "Physical Sciences") yang memiliki gaji median yang sama dengan atau lebih rendah dari median untuk seluruh jurusan (semua jurusan, bukan hanya yang termasuk dalam kategori STEM)? Output Anda hanya boleh menampilkan nama jurusan serta pendapatan median, persentil ke-25, dan persentil ke-75 untuk jurusan tersebut, dan harus diurutkan sehingga jurusan dengan pendapatan median tertinggi berada di bagian atas.
+
+```{r}
+median_all <- median(college_recent_grads$median, na.rm = TRUE)
+
+stem_low_income <- college_recent_grads %>%
+  filter(major_category %in% c("Biology & Life Science", "Computers & Mathematics", "Engineering", "Physical Sciences"),
+         median <= median_all) %>%
+  arrange(desc(median)) %>%
+  select(major, median, p25th, p75th)
+
+print(stem_low_income)
+```
+
+### Exercise 5
+Buatlah sebuah pertanyaan yang menarik bagi Anda yang dapat dijawab menggunakan setidaknya tiga variabel dari dataset, lalu jawab pertanyaan tersebut menggunakan statistik ringkasan dan/atau visualisasi.
+
+```{r}
+ggplot(college_recent_grads, aes(x = total, y = median)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Total Lulusan vs. Gaji Median",
+       x = "Total Lulusan",
+       y = "Gaji Median") +
+  theme_minimal()
+```
+
+Scatter plot tersebut menunjukkan bahwa semakin banyak lulusan dari suatu jurusan, gaji median mereka cenderung tidak meningkat, bahkan sedikit menurun, mungkin karena persaingan kerja yang tinggi. Selain itu, terdapat outlier, yaitu jurusan dengan gaji sangat tinggi atau sangat rendah dibandingkan kebanyakan jurusan lainnya. Outlier ini bisa disebabkan oleh faktor seperti permintaan kerja yang sangat tinggi untuk jurusan tertentu atau jurusan dengan prospek karier yang terbatas dan faktor lainnya.
